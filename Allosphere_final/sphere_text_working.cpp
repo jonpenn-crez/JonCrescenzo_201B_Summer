@@ -1,6 +1,8 @@
 #include "al/app/al_App.hpp"
 #include "al/app/al_GUIDomain.hpp"
 #include "al/math/al_Random.hpp"
+#include "al/graphics/al_Font.hpp"
+
 #include <vector>
 
 using namespace al;
@@ -23,7 +25,10 @@ struct AlloApp : App {
   Parameter stiffness{"/stiffness", "", 1.0, 0.1, 5.0};      // spring strength
   Parameter sphereRadius{"/sphereRadius", "", 10.0, 1.0, 20.0}; // desired radius
 
-  ShaderProgram pointShader;
+  // ShaderProgram pointShader;
+
+//declare font
+  Font font;
 
   // Simulation data
   Mesh mesh;                 // holds positions (vertices)
@@ -31,7 +36,16 @@ struct AlloApp : App {
   vector<Vec3f> force;      // accumulated forces on each point
   vector<float> mass;       // mass of each point
 
-  bool freeze = false;      // pause simulation
+  vector<string> words = {
+      "ONE", "TWO", "THREE", "FOUR", "FIVE",
+      "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ONE", "TWO", "THREE", "FOUR", "FIVE",
+      "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ONE", "TWO", "THREE", "FOUR", "FIVE",
+      "SIX", "SEVEN", "EIGHT", "NINE", "TEN"
+  };
+
+  //meshes, one per text string 
+  vector<Mesh> textMeshes;
+
 
   // Called once at startup (good for GUI setup)
   void onInit() override {
@@ -49,45 +63,44 @@ struct AlloApp : App {
 
   void onCreate() override {
 
-    //Karl
-    // Compile point shader (for rendering)
-    pointShader.compile(slurp("../point-vertex.glsl"),
-                        slurp("../point-fragment.glsl"),
-                        slurp("../point-geometry.glsl"));
+    //load the font 
+    font.load("data/VeraMono.ttf", 200, 1024);
 
-    mesh.primitive(Mesh::POINTS); // we are drawing points
+    mesh.primitive(Mesh::POINTS); 
 
-   
-    //add points to the mesh, for loop
-    int numberPoints = 500;
+    //number of particles = number of words
+    int numberPoints = words.size();
     
-    for (int i = 0; i < numberPoints; i++)
-{
-      //random point in space, vector array
+    for (int i = 0; i < numberPoints; i++){
+      //random point in space, vector array, position on the sphere
       Vec3f sphere = randomVec3f(1.0);
-
-      // normalize the point for the sphere radius
       sphere.normalize(sphereRadius);
 
       //add points to mesh
-      mesh.vertex(sphere);
 
     // random color
-    mesh.color(HSV(rnd::uniform(), 1.0, 1.0));
+    // mesh.color(HSV(rnd::uniform(), 1.0, 1.0));
 
-    //texture coordinates 
-    mesh.texCoord(1.0, 0.0);
+    
+    //store the position in mesh
+    mesh.vertex(sphere);
+    
+    
+    //why do you want me to get ride the velocity? 
+    // because we are going to update the position of the points with a sin wave, so we don't need the velocity to move the points around
 
-//push back adds a new element to the end of the vector
-
-    //give it an initial velocity
+    // initializing pyshics
     velocity.push_back(randomVec3f(0.1));
-
-    // give it an initial force 
     force.push_back(Vec3f(0, 0, 0));
-
-    // give it a mass, default 1
     mass.push_back(1.0);
+
+  //create a mesh for the words
+  Mesh textMesh;
+  //need to c_str() to convert from string to char array
+  font.write(textMesh, words[i].c_str(), 0.2f);
+
+  //store it 
+  textMeshes.push_back(textMesh);
 
 }
 
@@ -117,17 +130,12 @@ struct AlloApp : App {
      
 
         //distance from desired radius
-        // + = too far out, - = too far in
         float stretch = distance - sphereRadius;
-
-        //springforce toward the center
         Vec3f springforce = -stiffness * stretch * direction;
-
-        //add this to the force of the particles
         force[i] += springforce;
   
-        //expand the sphere with time
-        position[i] += direction * sin(dt);
+        // //expand the sphere with time
+        // position[i] += direction * sin(dt);
 
       }
   }
@@ -135,7 +143,8 @@ struct AlloApp : App {
 
     //drag forces -- push the velocity back to zero
      for (int i =0; i < velocity.size(); i++) {
-      force[i] += -velocity[i] * dragforce;      
+      force[i] += -velocity[i] * dragforce;  
+      // position[i] += velocity[i] * timeStep;    
     }
 
     
@@ -144,7 +153,6 @@ struct AlloApp : App {
      for (int i= 0; i < velocity.size(); i++) {
       //F = ma
       velocity[i] += force[i] / mass[i] * timeStep;
-
       //update position from the velocities
       position[i] += velocity[i] * timeStep;
 
@@ -161,14 +169,38 @@ struct AlloApp : App {
   void onDraw(Graphics &g) override {
     g.clear(0.3);
 
-    g.shader(pointShader);
-    g.shader().uniform("pointSize", pointSize / 100);
+    // g.shader(pointShader);
+    // g.shader().uniform("pointSize", pointSize / 100);
 
     g.blending(true);
     g.blendTrans();
     g.depthTesting(true);
 
-    g.draw(mesh);
+    //bind the textture (needed for text rendering)
+    g.texture();
+    font.tex.bind();
+
+    vector<Vec3f> &position = mesh.vertices();
+
+    //loop through each particle
+    for (int i = 0; i < textMeshes.size(); i++){
+
+      g.pushMatrix();
+
+       // Move to particle position
+      g.translate(position[i]);
+
+      // Scale text size
+      g.scale(pointSize / 5.0);
+
+      // Draw the text mesh at that position
+      g.draw(textMeshes[i]);
+
+      g.popMatrix();
+
+    }
+
+    font.tex.unbind();
   }
 };
 
