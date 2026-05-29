@@ -9,7 +9,6 @@
 #include <sstream>
 #include <vector>
 
-
 using namespace al;
 using namespace std;
 
@@ -28,8 +27,9 @@ struct AlloApp : App {
   Parameter minDistance{"/minDistance", "", 5.0, 0.1, 10.0};
   Parameter repelStrength{"/repelStrength", "", 1.0, 0.0, 20.0};
   Parameter lineWidth{"/lineWidth", "", 4.0, 1.0, 10.0};
-  Parameter boxWidth {"/boxWidth", "", 2.0, 0.1, 10.0};
-  Parameter boxHeight {"/boxHeight", "", 0.5, 0.1, 3.0};
+  Parameter boxWidth{"/boxWidth", "", 5.0, 0.1, 10.0};
+  Parameter boxHeight{"/boxHeight", "", 0.5, 0.1, 3.0};
+  Parameter alphaLines{"/Alpha Lines", "", 0.5, 0.1, 1.0};
 
   Font font;
 
@@ -44,10 +44,7 @@ struct AlloApp : App {
 
   vector<string> words;
   vector<string> categories;
-  
   vector<Mesh> textMeshes;
-  //boxes behind text for better visibility
-  vector<Mesh> backgroundMeshes;
 
   void loadCSV(string filename) {
     ifstream file(filename);
@@ -67,12 +64,10 @@ struct AlloApp : App {
 
       getline(ss, title, ',');
       getline(ss, category, ',');
-      
 
       if (title.size() > 0) {
         words.push_back(title);
         categories.push_back(category);
-        
       }
     }
 
@@ -95,10 +90,12 @@ struct AlloApp : App {
     gui.add(lineWidth);
     gui.add(boxWidth);
     gui.add(boxHeight);
+    gui.add(alphaLines);
+
   }
 
   void onCreate() override {
-    font.load("data/Datatype-VariableFont_wdth,wght.ttf", 200, 1024);
+    font.load("/Users/joncrescenzo/allolib_playground/JonCrescenzo_201B_Summer/Allosphere_final/data/Datatype-VariableFont_wdth,wght.ttf", 200, 1024);
     font.alignCenter();
 
     loadCSV("/Users/joncrescenzo/allolib_playground/JonCrescenzo_201B_Summer/Allosphere_final/test4.csv");
@@ -107,7 +104,6 @@ struct AlloApp : App {
       words.push_back("NO CSV");
       categories.push_back("none");
     }
-
 
     mesh.primitive(Mesh::POINTS);
     lineMesh.primitive(Mesh::LINES);
@@ -127,26 +123,6 @@ struct AlloApp : App {
       Mesh textMesh;
       font.write(textMesh, words[i].c_str(), 0.05f);
       textMeshes.push_back(textMesh);
-
-      //box outline
-      Mesh outline;
-      outline.primitive(Mesh::LINE_STRIP);
-
-      float w = boxWidth;
-      float h = boxHeight;
-
-      outline.vertex(-w, -h, 0);
-      outline.vertex( w, -h, 0);
-      outline.vertex( w,  h, 0);
-      outline.vertex(-w,  h, 0);
-
-      outline.color(1, 1, 1);
-      outline.color(1, 1, 1);
-      outline.color(1, 1, 1);
-      outline.color(1, 1, 1);
-
-      backgroundMeshes.push_back(outline);
-
     }
 
     nav().pos(0, 0, 40);
@@ -154,19 +130,43 @@ struct AlloApp : App {
 
   void onAnimate(double dt) override {
     timer += dt;
+
     vector<Vec3f> &position = mesh.vertices();
 
-    //pushes away from the south pole
-    float floorY  = - sphereRadius * 0.5;
-    
-    for (int i = 0; i < position.size(); i++)
-{
-  if (position[i].y < floorY) {
-    float pushStrength = 5.0;
-    force[i] += Vec3f(0, pushStrength, 0);
-  }
-}
-    // Keep all words near the sphere surface
+    float floorY = -sphereRadius * 0.5;
+
+    // Different categories repel
+    for (int i = 0; i < position.size(); i++) {
+      for (int j = i + 1; j < position.size(); j++) {
+        if (categories[i] != categories[j]) {
+          Vec3f direction = position[i] - position[j];
+          float distance = direction.mag();
+
+          if (distance > 0.0001) {
+            direction.normalize();
+
+            float separationDistance = 5.0;
+            float categoryRepel = 0.5;
+
+            if (distance < separationDistance) {
+              Vec3f repelForce = direction * categoryRepel;
+              force[i] += repelForce;
+              force[j] -= repelForce;
+            }
+          }
+        }
+      }
+    }
+
+    // Push away from south pole
+    for (int i = 0; i < position.size(); i++) {
+      if (position[i].y < floorY) {
+        float pushStrength = 5.0;
+        force[i] += Vec3f(0, pushStrength, 0);
+      }
+    }
+
+    // Keep all words near sphere surface
     for (int i = 0; i < position.size(); i++) {
       Vec3f direction = position[i];
       float distance = direction.mag();
@@ -181,13 +181,12 @@ struct AlloApp : App {
       }
     }
 
-    // Matching categories attract, but repel if too close
-    
+    // Same categories attract, but repel if too close
     for (int i = 0; i < position.size(); i++) {
       for (int j = i + 1; j < position.size(); j++) {
         if (categories[i] == categories[j]) {
-        Vec3f direction = position[j] - position[i];
-        float distance = direction.mag();
+          Vec3f direction = position[j] - position[i];
+          float distance = direction.mag();
 
           if (distance > 0.0001) {
             direction.normalize();
@@ -207,78 +206,68 @@ struct AlloApp : App {
       }
     }
 
-    // Drag slows motion
+    // Drag
     for (int i = 0; i < velocity.size(); i++) {
       force[i] += -velocity[i] * dragforce;
     }
 
-    // Update velocity and position
+    // Integrate
     for (int i = 0; i < velocity.size(); i++) {
       velocity[i] += force[i] / mass[i] * timeStep;
       position[i] += velocity[i] * timeStep;
     }
 
+    // Build connection lines after 12 seconds
+    if (timer > 12.0) {
+      lineMesh.reset();
+      lineMesh.primitive(Mesh::LINES);
 
-    if(timer > 8.0) {
-    
-    lineMesh.reset();
-    lineMesh.primitive(Mesh::LINES);
+      float t = (timer - 12.0) / 3.0;
 
-    float t = (timer - 8.0) / 3.0;// 3 secs grow lines
+      if (t < 0) t = 0;
+      if (t > 1) t = 1;
 
-    if (t < 0) t = 0;
-    if ( t > 1) t = 1;
+      float easeT = t * t * (3 - 2 * t);
 
-    //ease 
-    float easeT = t * t * (3 - 2 * t);
+      for (int i = 0; i < position.size(); i++) {
+        for (int j = i + 1; j < position.size(); j++) {
+          if (categories[i] == categories[j]) {
+            Vec3f start = position[i];
+            Vec3f end = position[j];
+            Vec3f animatedEnd = start + (end - start) * easeT;
 
-    for (int i = 0; i < position.size(); i++) {
-      for (int j = i + 1; j < position.size(); j++) {
-        
-        if (categories[i] == categories[j]) {
-        
-          //start and end positions
-          Vec3f start = position[i];
-          Vec3f end = position[j];
+            Color inlineColor = Color(1, 1, 1, 0.25);
 
-          //animate between start and end
-          Vec3f animatedEnd  = start + (end - start) * easeT;
-
-          //color lines based on category
-          Color inlineColor = Color(1, 1, 1, 0.25);
-          
-          if(categories[i] == "Intercept"){
-              inlineColor = Color(1, 1, 1, 0.5);
+            if (categories[i] == "Intercept") {
+              inlineColor = Color(1, 1, 1, alphaLines);
             }
 
-            if (categories[i] == "NYT"){
-              inlineColor = Color(.5, .5, .25, 0.5);
+            if (categories[i] == "NYT") {
+              inlineColor = Color(1, 1, 1, alphaLines);
             }
 
-            if (categories[i] == "WSJ"){
-              inlineColor = Color(.75, .75, 1, 0.5);
+            if (categories[i] == "WSJ") {
+              inlineColor = Color(1, 1, 1, alphaLines);
             }
 
-            if (categories[i] == "FTTimes"){
-              inlineColor = Color(.5, .5, 1, 0.5);
+            if (categories[i] == "FTTimes") {
+              inlineColor = Color(1, 1, 1, alphaLines);
             }
 
-            if (categories[i] == "DropSite"){
-              inlineColor = Color(1, .5, .5, 0.5);
+            if (categories[i] == "DropSite") {
+              inlineColor = Color(1, 1, 1, alphaLines);
             }
 
+            lineMesh.vertex(start);
+            lineMesh.color(inlineColor);
 
-          lineMesh.vertex(start);
-          lineMesh.color(inlineColor);
-
-          lineMesh.vertex(animatedEnd);
-          lineMesh.color(inlineColor);
+            lineMesh.vertex(animatedEnd);
+            lineMesh.color(inlineColor);
+          }
         }
       }
     }
-  }
 
-    // Clear forces
     for (auto &f : force) {
       f.set(0);
     }
@@ -291,34 +280,24 @@ struct AlloApp : App {
     g.blendTrans();
     g.depthTesting(true);
 
-    // Draw lines first
-    // g.texture(false);
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
 
     vector<Vec3f> &position = mesh.vertices();
 
-
-
     for (int i = 0; i < textMeshes.size(); i++) {
-     
-     
-    //draw boxes from origin to end
-    float t = (timer - 3.0) / 2.0;
-    
-    if (t < 0) t = 0;
-    if (t > 1) t = 1;
+      float t = (timer - 3.0) / 2.0;
 
-    float easeB = t * t * (3 -2 * t);
+      if (t < 0) t = 0;
+      if (t > 1) t = 1;
 
-    Vec3f start(0, 0, 0);
-    Vec3f end = position[i];
+      float easeB = t * t * (3 - 2 * t);
 
-    Vec3f animatedPos = start + (end - start) * easeB;
+      Vec3f start(0, 0, 0);
+      Vec3f end = position[i];
+      Vec3f animatedPos = start + (end - start) * easeB;
 
-     
-     
       g.pushMatrix();
 
       g.translate(animatedPos);
@@ -326,91 +305,69 @@ struct AlloApp : App {
       Quatd rotation = Quatd::getBillboardRotation(
           -position[i] / position[i].mag(),
           Vec3d(0, 1, 0));
-     
+
       g.rotate(rotation);
-    //boxes
 
-    
-// animated outline box
-if (timer > 2.5) {
+      // Colored outline box
+      if (timer > 2.5) {
+        Mesh outline;
+        outline.primitive(Mesh::LINE_LOOP);
 
-  Mesh outline;
-  outline.primitive(Mesh::LINE_STRIP);
+        float w = boxWidth;;
+        float h = boxHeight;
 
-  float w = boxWidth;
-  float h = boxHeight;
+        Color boxColor = Color(1, 1, 1);
 
-  // animation progress over 1 second
-  float t = (timer - 5.5) / 1.0;
+        if (categories[i] == "Intercept") {
+          boxColor = Color(1, 0, 0);
+        }
 
-  if (t < 0) t = 0;
-  if (t > 1) t = 1;
+        if (categories[i] == "FTT") {
+          boxColor = Color(1, 0, 1);
+        }
 
-  // easing
-  float ease = t * t * (3 - 2 * t);
+        if (categories[i] == "NYT") {
+          boxColor = Color(1, 1, 0);
+        }
 
-  Vec3f corners[5] = {
-    Vec3f(-w, -h, 0), // bottom-left
-    Vec3f( w, -h, 0), // bottom-right
-    Vec3f( w,  h, 0), // top-right
-    Vec3f(-w,  h, 0), // top-left
-    Vec3f(-w, -h, 0)  // close
-  };
+        if (categories[i] == "DropSite") {
+          boxColor = Color(1, 0.5, 1);
+        }
+         if (categories[i] == "WSJ") {
+          boxColor = Color(0, 0.5, 1);
+        }
 
-  // total edges
-  int totalSegments = 4;
 
-  // how many segments are visible
-  float drawAmount = ease * totalSegments;
+        outline.vertex(-w, -h, 0);
+        outline.color(boxColor);
 
-  int fullSegments = floor(drawAmount);
+        outline.vertex(w, -h, 0);
+        outline.color(boxColor);
 
-  float partial = drawAmount - fullSegments;
+        outline.vertex(w, h, 0);
+        outline.color(boxColor);
 
-  // draw completed segments
-  for (int k = 0; k < fullSegments; k++) {
-    outline.vertex(corners[k]);
-    outline.color(1,1,1);
+        outline.vertex(-w, h, 0);
+        outline.color(boxColor);
 
-    outline.vertex(corners[k+1]);
-    outline.color(1,1,1);
-  }
+        g.lineWidth(1.0);
+        g.meshColor();
+        g.draw(outline);
+      }
 
-  // draw partial segment
-  if (fullSegments < totalSegments) {
-
-    Vec3f a = corners[fullSegments];
-    Vec3f b = corners[fullSegments + 1];
-
-    Vec3f mid = a + (b - a) * partial;
-
-    outline.vertex(a);
-    outline.color(1,1,1);
-
-    outline.vertex(mid);
-    outline.color(1,1,1);
-  }
-
-  g.lineWidth(2.0);
-  g.meshColor();
-  g.draw(outline);
-}
-    
       g.texture();
       font.tex.bind();
 
       g.scale(pointSize / 5.0);
 
-      if(timer > 3.0){
+      if (timer > 3.0) {
         g.draw(textMeshes[i]);
-
       }
 
       font.tex.unbind();
+
       g.popMatrix();
     }
-
-    
   }
 };
 

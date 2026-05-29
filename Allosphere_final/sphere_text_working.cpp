@@ -141,7 +141,7 @@ struct AlloApp : App {
   }
 
 
-    //drag forces -- push the velocity back to zero
+    //drag forces -- push the velocity back the other way
      for (int i =0; i < velocity.size(); i++) {
       force[i] += -velocity[i] * dragforce;  
       // position[i] += velocity[i] * timeStep;    
@@ -189,6 +189,10 @@ struct AlloApp : App {
 
        // Move to particle position
       g.translate(position[i]);
+
+      Quatd rotation = Quatd::getBillboardRotation(-position[i] / position[i].mag(), Vec3d(0, 1, 0));
+      g.rotate(rotation);
+
 
       // Scale text size
       g.scale(pointSize / 5.0);

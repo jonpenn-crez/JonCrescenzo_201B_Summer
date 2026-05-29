@@ -1,2 +1,9 @@
 build
 **/build
+bin
+**/bin
+.DS_Store
+**/.DS_Store
+.vs
+.vscode
+imgui.ini
