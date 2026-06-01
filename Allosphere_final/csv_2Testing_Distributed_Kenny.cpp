@@ -48,11 +48,11 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   Parameter timeStep{"/timeStep", "", 0.02, 0.01, 0.6};
   Parameter dragforce{"/dragforce", "", 0.5, 0.0, 1.0};
   Parameter stiffness{"/stiffness", "", 1.0, 0.1, 5.0};
-  Parameter sphereRadius{"/sphereRadius", "", 20.0, 5.0, 40.0};
+  Parameter sphereRadius{"/sphereRadius", "", 5.0, 5.0, 100.0};
   Parameter attraction{"/attraction", "", 0.05, 0.0, 0.2};
-  Parameter minDistance{"/minDistance", "", 5.0, 0.1, 50.0};
+  Parameter minDistance{"/minDistance", "", 10.0, 0.1, 50.0};
   Parameter repelStrength{"/repelStrength", "", 1.0, 0.0, 20.0};
-  Parameter lineWidth{"/lineWidth", "", 4.0, 1.0, 10.0};
+  Parameter lineWidth{"/lineWidth", "", 0.5, 0.0, 10.0};
   Parameter boxWidth{"/boxWidth", "", 5.0, 0.1, 10.0};
   Parameter boxHeight{"/boxHeight", "", 0.5, 0.1, 3.0};
   Parameter alphaLines{"/alphaLines", "", 0.5, 0.1, 1.0};
@@ -548,6 +548,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
+    cout << "lineWidth = " << lineWidth.get() << endl;
 
     // Draw large subject labels after 25 seconds.
     if (state().timer > 25.0) {
@@ -581,7 +582,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
           g.texture();
           font.tex.bind();
 
-          g.scale(50.0);
+          g.scale(25.0);
           g.draw(subjectMeshes[s]);
 
           font.tex.unbind();
