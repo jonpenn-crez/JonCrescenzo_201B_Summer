@@ -807,7 +807,7 @@ int main() {
 
   // Enable audio output.
   app.configureAudio(
-      44100,  // sample rate
+      48000,  // sample rate
       512,    // buffer size
       2,      // output channels
       0);     // input channels
