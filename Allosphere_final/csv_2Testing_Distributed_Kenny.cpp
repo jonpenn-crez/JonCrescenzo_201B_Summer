@@ -342,24 +342,48 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
       // Trigger presets in sequence.
       if (presetTimer > presetTimes[currentPreset]) {
-        if (currentPreset == 0) {
-          presets.recallPreset("preset1");
-          cout << "preset1" << endl;
-        } else if (currentPreset == 1) {
-          presets.recallPreset("preset2");
-          cout << "preset2" << endl;
-        } else if (currentPreset == 2) {
-          presets.recallPreset("preset3");
-          cout << "preset3" << endl;
-        }
 
-        presetTimer = 0.0;
-        currentPreset++;
+  if (currentPreset == 0) {
+    presets.recallPreset("preset1");
 
-        if (currentPreset >= presetTimes.size()) {
-          currentPreset = 0;
-        }
-      }
+    cout << "\nPRESET 1" << endl;
+    cout << "pointSize     = " << pointSize.get() << endl;
+    cout << "sphereRadius  = " << sphereRadius.get() << endl;
+    cout << "minDistance   = " << minDistance.get() << endl;
+    cout << "repelStrength = " << repelStrength.get() << endl;
+    cout << "alphaLines    = " << alphaLines.get() << endl;
+  }
+
+  else if (currentPreset == 1) {
+    presets.recallPreset("preset2");
+
+    cout << "\nPRESET 2" << endl;
+    cout << "pointSize     = " << pointSize.get() << endl;
+    cout << "sphereRadius  = " << sphereRadius.get() << endl;
+    cout << "minDistance   = " << minDistance.get() << endl;
+    cout << "repelStrength = " << repelStrength.get() << endl;
+    cout << "alphaLines    = " << alphaLines.get() << endl;
+  }
+
+  else if (currentPreset == 2) {
+    presets.recallPreset("preset3");
+
+    cout << "\nPRESET 3" << endl;
+    cout << "pointSize     = " << pointSize.get() << endl;
+    cout << "sphereRadius  = " << sphereRadius.get() << endl;
+    cout << "minDistance   = " << minDistance.get() << endl;
+    cout << "repelStrength = " << repelStrength.get() << endl;
+    cout << "alphaLines    = " << alphaLines.get() << endl;
+  }
+
+  presetTimer = 0.0;
+
+  currentPreset++;
+
+  if (currentPreset >= presetTimes.size()) {
+    currentPreset = 0;
+  }
+}
 
       // Step preset morphing each frame.
       if (RunPresets.get()) {
@@ -390,11 +414,12 @@ struct AlloApp : DistributedAppWithState<WorldState> {
           }
         }
       }
+      
 
-      // Push headlines away from the bottom/south pole.
+      // Push headlines away from the bottom/ south pole.
       for (int i = 0; i < position.size(); i++) {
         if (position[i].y < floorY) {
-          force[i] += Vec3f(0, 5.0, 0);
+          force[i] += Vec3f(0, 2.0, 0);
         }
       }
 
@@ -536,8 +561,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
   // Draw callback.
   void onDraw(Graphics &g) override {
-    g.clear(0.3);
-
+    g.clear(0.05);
     g.blending(true);
     g.blendTrans();
     g.depthTesting(true);
@@ -548,48 +572,48 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
-    cout << "lineWidth = " << lineWidth.get() << endl;
+    // cout << "lineWidth = " << lineWidth.get() << endl;
 
     // Draw large subject labels after 25 seconds.
-    if (state().timer > 25.0) {
-      for (int s = 0; s < subjectNames.size(); s++) {
-        Vec3f center(0, 0, 0);
-        int count = 0;
+    // if (state().timer > 25.0) {
+    //   for (int s = 0; s < subjectNames.size(); s++) {
+    //     Vec3f center(0, 0, 0);
+    //     int count = 0;
 
-        // Find center of each category cluster.
-        for (int i = 0; i < state().count; i++) {
-          if (categories[i] == subjectNames[s]) {
-            center += state().positions[i];
-            count++;
-          }
-        }
+    //     // Find center of each category cluster.
+    //     for (int i = 0; i < state().count; i++) {
+    //       if (categories[i] == subjectNames[s]) {
+    //         center += state().positions[i];
+    //         count++;
+    //       }
+    //     }
 
-        if (count > 0) {
-          center /= count;
+    //     if (count > 0) {
+    //       center /= count;
 
-          Vec3f labelPos = center;
-          labelPos.normalize(labelPos.mag() + 4.0);
+    //       Vec3f labelPos = center;
+    //       labelPos.normalize(labelPos.mag() + 4.0);
 
-          g.pushMatrix();
-          g.translate(labelPos);
+    //       g.pushMatrix();
+    //       g.translate(labelPos);
 
-          Quatd rotation = Quatd::getBillboardRotation(
-              -labelPos / labelPos.mag(),
-              Vec3d(0, 1, 0));
+    //       Quatd rotation = Quatd::getBillboardRotation(
+    //           -labelPos / labelPos.mag(),
+    //           Vec3d(0, 1, 0));
 
-          g.rotate(rotation);
+    //       g.rotate(rotation);
 
-          g.texture();
-          font.tex.bind();
+    //       g.texture();
+    //       font.tex.bind();
 
-          g.scale(25.0);
-          g.draw(subjectMeshes[s]);
+    //       g.scale(25.0);
+    //       g.draw(subjectMeshes[s]);
 
-          font.tex.unbind();
-          g.popMatrix();
-        }
-      }
-    }
+    //       font.tex.unbind();
+    //       g.popMatrix();
+    //     }
+    //   }
+    // }
 
     int headlineCount = state().count;
 
