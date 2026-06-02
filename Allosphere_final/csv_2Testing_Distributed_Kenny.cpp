@@ -48,7 +48,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   Parameter timeStep{"/timeStep", "", 0.02, 0.01, 0.6};
   Parameter dragforce{"/dragforce", "", 0.5, 0.0, 1.0};
   Parameter stiffness{"/stiffness", "", 1.0, 0.1, 5.0};
-  Parameter sphereRadius{"/sphereRadius", "", 5.0, 5.0, 100.0};
+  Parameter sphereRadius{"/sphereRadius", "", 100, 5.0, 100.0};
   Parameter attraction{"/attraction", "", 0.05, 0.0, 0.2};
   Parameter minDistance{"/minDistance", "", 10.0, 0.1, 50.0};
   Parameter repelStrength{"/repelStrength", "", 1.0, 0.0, 20.0};
@@ -90,10 +90,16 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
   // Time between preset changes.
   vector<double> presetTimes = {
-      0.0,
-      7.0,
-      30.0,
-      15.0
+      18.0,// 1 Preset
+      10.0, // 2 Preset
+      5.0, // 3 Preset
+      10,0, //  4 Preset
+      5.0, // 5 Preset  
+      30.0, // 6 Preset
+      15.0, // 7 Preset
+      15.0,  // 8 Preset
+      10.0, // 9 Preset
+      10.0 // 10 Preset
   };
 
   // Order that category connection lines appear.
@@ -192,7 +198,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     searchPaths.addRelativePath("../data");
 
     // Load sound file.
-    string soundPath = searchPaths.find("count.wav").filepath();
+    string soundPath = searchPaths.find("Sound&Color.wav").filepath();
 
     if (!player.open(soundPath.c_str())) {
       cout << "Could not open sound file: " << soundPath << endl;
@@ -342,48 +348,49 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
       // Trigger presets in sequence.
       if (presetTimer > presetTimes[currentPreset]) {
+        if (currentPreset == 0) {
+          presets.recallPreset("preset1");
+          cout << "preset1" << endl;
+        } else if (currentPreset == 1) {
+          presets.recallPreset("preset2");
+          cout << "preset2" << endl;
+        } else if (currentPreset == 2) {
+          presets.recallPreset("preset3");
+          cout << "preset3" << endl;
+        }
+          else if (currentPreset == 3) {
+          presets.recallPreset("preset4");
+          cout << "preset4" << endl;
+        }
+          else if (currentPreset == 4) {
+          presets.recallPreset("preset5");
+          cout << "preset5" << endl;
+        }
+          else if (currentPreset == 5) {
+          presets.recallPreset("preset6");
+          cout << "preset6" << endl;
+        }
+          else if (currentPreset == 6) {
+          presets.recallPreset("preset7");
+          cout << "preset7" << endl;
+        } else if (currentPreset == 7) {
+          presets.recallPreset("preset8");
+          cout << "preset8" << endl;
+        } else if (currentPreset == 8) {
+          presets.recallPreset("preset9");
+          cout << "preset9" << endl;
+        } else if (currentPreset == 9) {
+          presets.recallPreset("preset10");
+          cout << "preset10" << endl;
+        }
 
-  if (currentPreset == 0) {
-    presets.recallPreset("preset1");
+        presetTimer = 0.0;
+        currentPreset++;
 
-    cout << "\nPRESET 1" << endl;
-    cout << "pointSize     = " << pointSize.get() << endl;
-    cout << "sphereRadius  = " << sphereRadius.get() << endl;
-    cout << "minDistance   = " << minDistance.get() << endl;
-    cout << "repelStrength = " << repelStrength.get() << endl;
-    cout << "alphaLines    = " << alphaLines.get() << endl;
-  }
-
-  else if (currentPreset == 1) {
-    presets.recallPreset("preset2");
-
-    cout << "\nPRESET 2" << endl;
-    cout << "pointSize     = " << pointSize.get() << endl;
-    cout << "sphereRadius  = " << sphereRadius.get() << endl;
-    cout << "minDistance   = " << minDistance.get() << endl;
-    cout << "repelStrength = " << repelStrength.get() << endl;
-    cout << "alphaLines    = " << alphaLines.get() << endl;
-  }
-
-  else if (currentPreset == 2) {
-    presets.recallPreset("preset3");
-
-    cout << "\nPRESET 3" << endl;
-    cout << "pointSize     = " << pointSize.get() << endl;
-    cout << "sphereRadius  = " << sphereRadius.get() << endl;
-    cout << "minDistance   = " << minDistance.get() << endl;
-    cout << "repelStrength = " << repelStrength.get() << endl;
-    cout << "alphaLines    = " << alphaLines.get() << endl;
-  }
-
-  presetTimer = 0.0;
-
-  currentPreset++;
-
-  if (currentPreset >= presetTimes.size()) {
-    currentPreset = 0;
-  }
-}
+        if (currentPreset >= presetTimes.size()) {
+          currentPreset = 0;
+        }
+      }
 
       // Step preset morphing each frame.
       if (RunPresets.get()) {
@@ -497,9 +504,9 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
     double drawTimer = state().timer;
 
-    if (drawTimer <= 12.0) return;
+    if (drawTimer <= 45.0) return;
 
-    double categoryDelay = 3.0;
+    double categoryDelay = 5.0;
     double growTime = 3.0;
 
     int count = state().count;
@@ -507,7 +514,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     for (int c = 0; c < lineCategoryOrder.size(); c++) {
       string activeCategory = lineCategoryOrder[c];
 
-      double categoryStart = 12.0 + c * categoryDelay;
+      double categoryStart = 45.0 + c * categoryDelay;
 
       if (drawTimer < categoryStart) {
         continue;
@@ -562,9 +569,48 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   // Draw callback.
   void onDraw(Graphics &g) override {
     g.clear(0.05);
+
+
+    if (state().timer >= 148.0) {
+        return;
+    }
+    
     g.blending(true);
-    g.blendTrans();
+    g.blendAdd();
     g.depthTesting(true);
+
+    if (state().timer > 5.0 && state().timer < 15.0) {
+
+  static Mesh titleMesh;
+  static bool built = false;
+
+  if (!built) {
+    font.write(titleMesh, "AI Headlines 2026", 0.08f);
+    built = true;
+  }
+
+  g.pushMatrix();
+
+  g.translate(0, 8, 0);
+
+  Quatd rotation = Quatd::getBillboardRotation(
+      Vec3d(0, 0, -1),
+      Vec3d(0, 1, 0));
+
+  g.rotate(rotation);
+
+  font.tex.bind();
+  g.texture();
+
+  // g.color(1, 1, 1, 1);
+
+  g.scale(80.0);   // make it large
+  g.draw(titleMesh);
+
+  font.tex.unbind();
+
+  g.popMatrix();
+}
 
     // Draw connection lines.
     buildLineMeshFromState();
@@ -572,48 +618,6 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
-    // cout << "lineWidth = " << lineWidth.get() << endl;
-
-    // Draw large subject labels after 25 seconds.
-    // if (state().timer > 25.0) {
-    //   for (int s = 0; s < subjectNames.size(); s++) {
-    //     Vec3f center(0, 0, 0);
-    //     int count = 0;
-
-    //     // Find center of each category cluster.
-    //     for (int i = 0; i < state().count; i++) {
-    //       if (categories[i] == subjectNames[s]) {
-    //         center += state().positions[i];
-    //         count++;
-    //       }
-    //     }
-
-    //     if (count > 0) {
-    //       center /= count;
-
-    //       Vec3f labelPos = center;
-    //       labelPos.normalize(labelPos.mag() + 4.0);
-
-    //       g.pushMatrix();
-    //       g.translate(labelPos);
-
-    //       Quatd rotation = Quatd::getBillboardRotation(
-    //           -labelPos / labelPos.mag(),
-    //           Vec3d(0, 1, 0));
-
-    //       g.rotate(rotation);
-
-    //       g.texture();
-    //       font.tex.bind();
-
-    //       g.scale(25.0);
-    //       g.draw(subjectMeshes[s]);
-
-    //       font.tex.unbind();
-    //       g.popMatrix();
-    //     }
-    //   }
-    // }
 
     int headlineCount = state().count;
 
@@ -634,13 +638,24 @@ struct AlloApp : DistributedAppWithState<WorldState> {
         g.rotate(rotation);
       }
 
-      g.texture();
-      font.tex.bind();
+      g.depthTesting(false);
 
-      g.scale(pointSize / 5.0);
-      g.draw(textMeshes[i]);
+    g.blending(true);
+    g.blendAdd();
 
-      font.tex.unbind();
+    g.texture();
+    font.tex.bind();
+
+
+    g.scale(pointSize / 5.0);
+    g.draw(textMeshes[i]);
+
+    font.tex.unbind();
+
+    // g.color(1, 1, 1, 1);
+    g.tint(1, 0, 1);
+    g.blending(false);
+    g.depthTesting(true);
 
       g.popMatrix();
     }
@@ -669,6 +684,35 @@ struct AlloApp : DistributedAppWithState<WorldState> {
           presets.storePreset("preset4");
           cout << "Preset 4 stored." << endl;
           break;
+        case '5':
+          presets.storePreset("preset5");
+          cout << "Preset 5 stored." << endl;
+          break;
+
+          case '6':
+          presets.storePreset("preset6"); 
+          cout << "Preset 6 stored." << endl;
+          break;
+
+          case '7':
+          presets.storePreset("preset7");
+          cout << "Preset 7 stored." << endl;
+          break;
+
+          case '8':   
+          presets.storePreset("preset8");
+          cout << "Preset 8 stored." << endl;
+          break;  
+
+          case '9':
+          presets.storePreset("preset9");     
+          cout << "Preset 9 stored." << endl;
+          break;
+          
+          case '0':
+          presets.storePreset("preset10");
+          cout << "Preset 10 stored." << endl;
+          break;
       }
     } else {
       switch (k.key()) {
@@ -690,6 +734,36 @@ struct AlloApp : DistributedAppWithState<WorldState> {
         case '4':
           presets.recallPreset("preset4");
           cout << "Preset 4 morphing." << endl;
+          break;
+
+        case '5':
+          presets.recallPreset("preset5");
+          cout << "Preset 5 morphing." << endl; 
+          break;
+
+        case '6':
+          presets.recallPreset("preset6");
+          cout << "Preset 6 morphing." << endl;
+          break;  
+
+          case '7':
+          presets.recallPreset("preset7");
+          cout << "Preset 7  morphing." << endl;
+          break;  
+
+          case '8':
+          presets.recallPreset("preset8");
+          cout << "Preset 8 morphing." << endl;
+          break;
+
+          case '9':
+          presets.recallPreset("preset9");
+          cout << "Preset 9 morphing." << endl;
+          break;
+
+          case '0':
+          presets.recallPreset("preset10");     
+          cout << "Preset 10 morphing." << endl;
           break;
       }
     }
