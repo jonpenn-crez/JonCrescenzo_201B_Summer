@@ -589,13 +589,13 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.blendAdd();
     g.depthTesting(true);
 
-    if (state().timer > 5.0 && state().timer < 15.0) {
+    if (state().timer > 2.0 && state().timer < 15.0) {
 
   static Mesh titleMesh;
   static bool built = false;
 
   if (!built) {
-    font.write(titleMesh, "100 Headlines on AI in 2026", 0.08f);
+    font.write(titleMesh, "100 Headlines on AI in 2026", 0.20f);
     built = true;
   }
 
