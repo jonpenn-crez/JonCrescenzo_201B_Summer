@@ -288,6 +288,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     }
 
     nav().pos(0, 0, 40);
+    lens().near(0.2).far(100).eyeSep(0);
 
     // Expose parameters through parameter server.
     parameterServer() << pointSize << boxWidth << boxHeight << lineWidth
@@ -612,7 +613,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   g.texture();
 
   // g.color(1, 1, 1, 1);
-  g.tint(1, 0.3, 0.4);
+  // g.tint(1, 0.3, 0.4);
   g.scale(80.0);   // make it large
   g.draw(titleMesh);
 
