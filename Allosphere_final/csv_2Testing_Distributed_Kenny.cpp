@@ -599,12 +599,22 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     built = true;
   }
 
+  for (int i = 0; i < 12; i++) {
+
+  float angle = M_2PI * i / 12.0;
+  float radius = sphereRadius * 1.1;
+
+  Vec3f pos(
+      cos(angle) * radius,
+      0,
+      sin(angle) * radius);
+
   g.pushMatrix();
 
-  g.translate(0, 8, 0);
+  g.translate(pos);
 
   Quatd rotation = Quatd::getBillboardRotation(
-      Vec3d(0, 0, -1),
+      -pos / pos.mag(),
       Vec3d(0, 1, 0));
 
   g.rotate(rotation);
@@ -612,14 +622,15 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   font.tex.bind();
   g.texture();
 
-  // g.color(1, 1, 1, 1);
-  // g.tint(1, 0.3, 0.4);
-  g.scale(80.0);   // make it large
+  // g.tint(1.0, 0.694, 0.078);
+
+  g.scale(20.0);
   g.draw(titleMesh);
 
   font.tex.unbind();
 
   g.popMatrix();
+  }
 }
 
     // Draw connection lines.
@@ -628,7 +639,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
-if (state().timer >= 17.0) {
+if (state().timer >= 18.5) {
 
   int headlineCount = state().count;
 
