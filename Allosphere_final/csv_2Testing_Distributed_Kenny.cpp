@@ -602,7 +602,8 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   for (int i = 0; i < 12; i++) {
 
   float angle = M_2PI * i / 12.0;
-  float radius = sphereRadius * 1.1;
+  // float radius = sphereRadius * 1.1;
+  float radius = sphereRadius * 0.8;
 
   Vec3f pos(
       cos(angle) * radius,
