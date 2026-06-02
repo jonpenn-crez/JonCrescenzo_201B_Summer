@@ -95,11 +95,13 @@ struct AlloApp : DistributedAppWithState<WorldState> {
       5.0, // 3 Preset
       10,0, //  4 Preset
       5.0, // 5 Preset  
-      30.0, // 6 Preset
-      15.0, // 7 Preset
+      25.0, // 6 Preset
+      25.0, // 7 Preset
       15.0,  // 8 Preset
       10.0, // 9 Preset
-      10.0 // 10 Preset
+      10.0, // 10 Preset
+      5.0, // 11 Preset
+      5.0 // 12 Preset
   };
 
   // Order that category connection lines appear.
@@ -294,11 +296,11 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
   // Returns a color based on category.
   Color categoryColor(string c) {
-    if (c == "Intercept") return Color(1, 1, 1);
-    if (c == "FTT") return Color(1, 1, 1);
-    if (c == "NYT") return Color(1, 1, 0);
-    if (c == "DropSite") return Color(1, 0.5, 1);
-    if (c == "WSJ") return Color(0, 0.5, 1);
+    if (c == "Intercept") return Color(1, 0, 1);
+    if (c == "FTT") return Color(1, 0.5, 1);
+    if (c == "NYT") return Color(0.5, 0.6, 1);
+    if (c == "DropSite") return Color(1, 0, 1);
+    if (c == "WSJ") return Color(1, 0.5, 1);
 
     return Color(1, 1, 1);
   }
@@ -382,7 +384,14 @@ struct AlloApp : DistributedAppWithState<WorldState> {
         } else if (currentPreset == 9) {
           presets.recallPreset("preset10");
           cout << "preset10" << endl;
+        } else if (currentPreset == 10) {
+          presets.recallPreset("preset11");
+          cout << "preset11" << endl;
+        } else if (currentPreset == 11) {
+          presets.recallPreset("preset12");
+          cout << "preset12" << endl;
         }
+
 
         presetTimer = 0.0;
         currentPreset++;
@@ -506,7 +515,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
     if (drawTimer <= 45.0) return;
 
-    double categoryDelay = 5.0;
+    double categoryDelay = 3.0;
     double growTime = 3.0;
 
     int count = state().count;
@@ -527,21 +536,21 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
       float easeT = t * t * (3 - 2 * t);
 
-      Color lineColor = Color(1, 1, 1, alphaLines);
+      Color lineColor = Color(1, 0, 1, alphaLines);
 
       if (activeCategory == "WSJ") {
-        lineColor = Color(1, 0.5, 0.5, alphaLines);
+        lineColor = Color(1.0, 0.2, 0.5, alphaLines);
       }
 
-      if (activeCategory == "FTTimes" || activeCategory == "FTT") {
-        lineColor = Color(1.0, 0.694, 0.078, alphaLines);
+      if (activeCategory == "FTT" ) {
+        lineColor = Color(1.0, 0.7, 0.1, alphaLines);
       }
 
       if (activeCategory == "NYT") {
         lineColor = Color(1, 1, 0, alphaLines);
       }
 
-      if (activeCategory == "DropSite") {
+      if (activeCategory == "Intercept") {
         lineColor = Color(1, 0.5, 1, alphaLines);
       }
 
@@ -568,10 +577,10 @@ struct AlloApp : DistributedAppWithState<WorldState> {
 
   // Draw callback.
   void onDraw(Graphics &g) override {
-    g.clear(0.05);
+    g.clear(0.0);
 
 
-    if (state().timer >= 148.0) {
+    if (state().timer >= 147.0) {
         return;
     }
     
@@ -585,7 +594,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   static bool built = false;
 
   if (!built) {
-    font.write(titleMesh, "AI Headlines 2026", 0.08f);
+    font.write(titleMesh, "100 Headlines on AI in 2026", 0.08f);
     built = true;
   }
 
@@ -603,7 +612,7 @@ struct AlloApp : DistributedAppWithState<WorldState> {
   g.texture();
 
   // g.color(1, 1, 1, 1);
-
+  g.tint(1, 0.3, 0.4);
   g.scale(80.0);   // make it large
   g.draw(titleMesh);
 
@@ -618,27 +627,27 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.meshColor();
     g.lineWidth(lineWidth);
     g.draw(lineMesh);
+if (state().timer >= 17.0) {
 
-    int headlineCount = state().count;
+  int headlineCount = state().count;
 
-    // Draw each headline.
-    for (int i = 0; i < textMeshes.size() && i < headlineCount; i++) {
-      Vec3f animatedPos = state().positions[i];
+  for (int i = 0; i < textMeshes.size() && i < headlineCount; i++) {
 
-      g.pushMatrix();
+    Vec3f animatedPos = state().positions[i];
 
-      g.translate(animatedPos);
+    g.pushMatrix();
 
-      // Make text face the viewer.
-      if (animatedPos.mag() > 0.0001) {
-        Quatd rotation = Quatd::getBillboardRotation(
-            -animatedPos / animatedPos.mag(),
-            Vec3d(0, 1, 0));
+    g.translate(animatedPos);
 
-        g.rotate(rotation);
-      }
+    if (animatedPos.mag() > 0.0001) {
+      Quatd rotation = Quatd::getBillboardRotation(
+          -animatedPos / animatedPos.mag(),
+          Vec3d(0, 1, 0));
 
-      g.depthTesting(false);
+      g.rotate(rotation);
+    }
+
+    g.depthTesting(false);
 
     g.blending(true);
     g.blendAdd();
@@ -646,21 +655,18 @@ struct AlloApp : DistributedAppWithState<WorldState> {
     g.texture();
     font.tex.bind();
 
-
     g.scale(pointSize / 5.0);
     g.draw(textMeshes[i]);
 
     font.tex.unbind();
 
-    // g.color(1, 1, 1, 1);
-    g.tint(1, 0, 1);
     g.blending(false);
     g.depthTesting(true);
 
-      g.popMatrix();
-    }
+    g.popMatrix();
   }
-
+}
+  }
   // Keyboard control for saving and recalling presets.
   bool onKeyDown(const Keyboard &k) override {
     if (k.shift()) {
@@ -713,6 +719,16 @@ struct AlloApp : DistributedAppWithState<WorldState> {
           presets.storePreset("preset10");
           cout << "Preset 10 stored." << endl;
           break;
+
+          case '-':
+          presets.storePreset("preset11");
+          cout << "Preset 11 stored." << endl;
+          break;
+
+          case '=':
+          presets.storePreset("preset12");
+          cout << "Preset 12 stored." << endl;
+          break;
       }
     } else {
       switch (k.key()) {
@@ -764,6 +780,16 @@ struct AlloApp : DistributedAppWithState<WorldState> {
           case '0':
           presets.recallPreset("preset10");     
           cout << "Preset 10 morphing." << endl;
+          break;
+          
+          case '-':
+          presets.recallPreset("preset11");
+          cout << "Preset 11 morphing." << endl;
+          break;  
+          
+          case '=':
+          presets.recallPreset("preset12");
+          cout << "Preset 12 morphing." << endl;
           break;
       }
     }
